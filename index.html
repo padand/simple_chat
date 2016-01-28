@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+  <head>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      #messageForm { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      #messageForm input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      #messageForm button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+    </style>
+  </head>
+  <body>
+    <form id="roomForm">
+      <label>Room:</label>
+      <input id="r"><button>Join</button>
+    </form>
+    <ul id="messages"></ul>
+    <form id="messageForm" action="">
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      $(document).ready(function(){
+        var socket = io();
+        var messages = $('#messages');
+
+        $('#roomForm').submit(function(){
+          socket.emit('joinRoom', $('#r').val());
+          $('#r').val('');
+          return false;
+        });
+
+        $('#messageForm').submit(function(){
+          socket.emit('message', $('#m').val());
+          $('#m').val('');
+          return false;
+        });
+
+        socket.on('message', function(msg){
+          addMessage(msg);
+        });
+
+        socket.on('joinedRoom', function(roomHistory){
+          roomHistory = roomHistory || [];
+          clearMessages();
+          console.log("Joined room");
+          console.log(roomHistory);
+          for(var i=0; i<roomHistory.length;  i++){
+            addMessage(roomHistory[i]);
+          }
+          alertUser('Joined room');
+        });
+
+        socket.on('oops', function(msg){
+          handleError(msg);
+        });
+
+        function addMessage(msg){
+          messages.append($('<li>').text(msg));
+        };
+        function clearMessages(){
+          messages.html('');
+        }
+
+        function handleError(err){
+          alertUser(err);
+        }
+
+        function alertUser(msg){
+          window.alert(msg);
+        }
+      });
+    </script>
+  </body>
+</html>
